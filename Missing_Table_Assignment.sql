@@ -15,12 +15,23 @@ CREATE TABLE [dbo].[CollegePlaying](
 ) ON [PRIMARY]
 GO
 
+-- ALTER TABLE [dbo].[CollegePlaying]
+-- ADD ID [int] NOT NULL IDENTITY;
+-- GO
 ALTER TABLE [dbo].[CollegePlaying]
-ADD ID [int] NOT NULL IDENTITY;
+ALTER COLUMN [playerID] [varchar](255) NOT NULL;
 GO
 
 ALTER TABLE [dbo].[CollegePlaying]
-ADD PRIMARY KEY (ID);
+ALTER COLUMN [schoolID] [varchar](255) NOT NULL;
+GO
+
+ALTER TABLE [dbo].[CollegePlaying]
+ALTER COLUMN [yearID] [int] NOT NULL;
+GO
+
+ALTER TABLE [dbo].[CollegePlaying]
+ADD PRIMARY KEY (playerID, schoolID, yearID);
 GO
 
 ALTER TABLE [dbo].[People]
