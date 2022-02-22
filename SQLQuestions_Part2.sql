@@ -225,7 +225,7 @@ GO
 --Answer to Question 18
 UPDATE People
 SET People.Total_401K = Total.TOtal_401k
-FROM (SELECT playerID, SUM([401K Contributions]) + SUM([401K Team Contributions]) AS Total_401k from Salaries GROUP BY playerID) AS Total
+FROM (SELECT playerID, ISNULL(SUM([401K Contributions]) + SUM([401K Team Contributions]), 0) AS Total_401k from Salaries GROUP BY playerID) AS Total
 WHERE Total.playerID = People.playerID
 GO
 
@@ -238,35 +238,19 @@ WHERE Total_401K IS NOT NULL
 ORDER BY playerID
 
 --Answer to Question 20
-WITH Current_Salary AS (
-    select playerID, salary AS Current_Salary, 
-    yearID from Salaries 
-    where yearID = (select MAX(yearID) from Salaries)
-    GROUP BY playerID, yearID, salary
-),
-Prior_Salary AS(
-    select playerID, salary AS Prior_Salary, 
-    yearID from Salaries 
-    where yearID = (select MAX(yearID) from Salaries)
-    GROUP BY playerID, yearID, salary
-)
-SELECT p.playerID,
-p.[nameGiven] + '('+ p.[nameFirst] +')' + p.[nameLast] AS [Full Name],
-Current_Salary.yearID,
-FORMAT(Current_Salary.Current_Salary, 'C'),
-FORMAT(Prior_Salary.Prior_Salary, 'C'),
-FORMAT((Current_Salary.Current_Salary - Prior_Salary.Prior_Salary), 'C') AS Difference,
-FORMAT(((Prior_Salary.Prior_Salary - Current_Salary.Current_Salary) - Current_Salary.Current_Salary), 'P') AS Increase
-FROM People AS p, Salaries s, Current_Salary, Prior_Salary
-WHERE p.playerID = s.playerID
-AND s.playerID = Current_Salary.playerID
--- AND s.yearID = Current_Salary.yearID
-AND s.playerID = Prior_Salary.playerID
--- AND s.yearID = Prior_Salary.yearID
-ORDER BY Current_Salary.yearID DESC, p.playerID
+Select people.playerid, (nameGiven + ' ( ' + nameFirst + ' ) ' + NameLast) as Full_Name,
+       s.yearid,
+       format(s.salary,'C') as Salary,
+       format(sp.salary,'C') as prior_year,
+       format((s.salary - sp.salary),'C') as Salary_Difference,
+       format(((s.salary - sp.salary)/sp.salary),'P') as Salary_Increase
+from people, salaries s, salaries sp
+       where people.playerid = s.playerid and
+       sp.yearid = s.yearid-1 and
+       sp.teamid = s.teamid and
+       sp.lgid = s.lgid and
+       sp.playerid = people.playerid
+order by playerid asc, yearid desc
 
-FROM People p INNER JOIN Salaries s
-WHERE p.playerID = s.playerID
-
-select salary AS Current_Salary, yearID from Salaries where playerID='aardsda01' and yearID = (select MAX(yearID)-1 from Salaries where playerID='aardsda01')
-select salary AS Prior_Salary, yearID from Salaries where playerID='aardsda01' and yearID = (select MAX(yearID)-2 from Salaries where playerID='aardsda01')
+-- select salary AS Current_Salary, yearID from Salaries where playerID='aardsda01' and yearID = (select MAX(yearID)-1 from Salaries where playerID='aardsda01')
+-- select salary AS Prior_Salary, yearID from Salaries where playerID='aardsda01' and yearID = (select MAX(yearID)-2 from Salaries where playerID='aardsda01')
