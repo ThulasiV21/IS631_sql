@@ -56,12 +56,13 @@ ORDER BY p.nameLast, s.yearID;
 GO
 
 --Answer to Question 4
-SELECT DISTINCT b.playerID,
+SELECT DISTINCT p.playerID,
 c.schoolID,
 b.yearID,
 CONVERT(decimal(5,4), (b.H * 1.0/ NULLIF(b.AB, 0))) AS [Batting Average]
-FROM Batting AS b, CollegePlaying AS c 
+FROM Batting AS b, CollegePlaying AS c, People AS p 
 WHERE b.playerID = c.playerID
+AND b.playerID = p.playerID
 AND CONVERT(decimal(5,4), (b.H * 1.0/ b.AB)) < 0.4
 AND b.AB > 0
 AND c.schoolID IN ('Brown', 'Columbia', 'Cornell', 'Dartmouth', 'Harvard', 'Princeton', 'UPenn', 'Yale')
@@ -93,7 +94,7 @@ GO
 SELECT p.playerID,
 p.[nameGiven] + '('+ p.[nameFirst] +')' + p.[nameLast] AS [Full Name],
 SUM(b.HR) AS [Total Home Runs],
-SUM(yearID) AS [Total Years Played]
+COUNT(yearID) AS [Total Years Played]
 FROM People AS p,
 Batting AS b
 WHERE p.playerID = b.playerID
@@ -251,6 +252,7 @@ from people, salaries s, salaries sp
        sp.lgid = s.lgid and
        sp.playerid = people.playerid
 order by playerid asc, yearid desc
+GO
 
 -- select salary AS Current_Salary, yearID from Salaries where playerID='aardsda01' and yearID = (select MAX(yearID)-1 from Salaries where playerID='aardsda01')
 -- select salary AS Prior_Salary, yearID from Salaries where playerID='aardsda01' and yearID = (select MAX(yearID)-2 from Salaries where playerID='aardsda01')
