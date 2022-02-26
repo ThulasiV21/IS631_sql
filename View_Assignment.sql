@@ -1,9 +1,9 @@
 IF OBJECT_ID ('tt347_Player_History', 'V') IS NOT NULL
-DROP VIEW Baseball_Averages
+DROP VIEW tt347_Player_History
 GO
 
 CREATE VIEW tt347_Player_History (playerID, FullName, Total_Teams, Batting_Total_Years, Total_Salary, Average_Salary, Total_401k, Last_Year_College, 
-Last_Year_Batting, Batting_Average, Total_HR, Total_Wins, Total_SO, Total_Awards_Player, Total_Awards_Manager, Hall_Of_Fame_Inducted_Years, Nominated_Year)
+Last_Year_Batting, Batting_Average, Total_HR, Total_Wins, Total_SO, Total_Awards_Player, Total_Awards_Manager, Hall_Of_Fame_Inducted_Years, Nominated_Years, Hall_Of_Fame)
 AS 
 WITH A as (SELECT playerID,
 [nameGiven] + '('+ [nameFirst] +')' + [nameLast] AS Full_Name,
@@ -51,27 +51,47 @@ G AS (
     GROUP BY am.playerID
 ),
 H AS (
-    SELECT hof.playerID, Hall_Of_Fame_Inducted_Years.Count_Y, Count_N
-    FROM (SELECT playerID, COUNT(yearID) AS Count_Y FROM HallOfFame WHERE inducted='Y' GROUP BY playerID) AS Hall_Of_Fame_Inducted_Years,
-    (SELECT playerID, COUNT(yearID) AS Count_N FROM HallOfFame hf WHERE inducted='N' GROUP BY playerID) AS Nominated_Year,
-    HallOfFame hof 
-    WHERE hof.playerID = Hall_Of_Fame_Inducted_Years.playerID
-    and hof.playerID = Nominated_Year.playerID
+    SELECT playerID
+    , CASE 
+        WHEN SUM(CASE 
+                    WHEN inducted = 'Y'
+                        AND yearid IS NULL
+                        THEN 0
+                    WHEN inducted = 'Y'
+                        THEN 1
+                    ELSE 0
+                    END) > 0
+            THEN 'Yes'
+        ELSE 'No'
+        END AS Hall_Of_Fame
+    , SUM(CASE 
+            WHEN inducted = 'Y'
+                THEN 1
+            ELSE 0
+            END) inducted
+    , SUM(CASE 
+            WHEN inducted = 'N'
+                THEN 1
+            ELSE 0
+            END) not_inducted
+FROM HallOfFame
+GROUP BY playerID
 )
 SELECT A.playerID, A.Full_Name, B.Total_Teams, B.Batting_Total_Years, C. Total_Salary, C.Average_Salary, A.Total_401K, D.Last_Year_College, B.Last_Year_Batting, 
-B.Batting_Average, B.Total_HR, E.Total_Wins, E.Total_SO, F.Total_Awards_Player, G.Total_Awards_Manager, H.Count_Y, H.Count_N
+B.Batting_Average, B.Total_HR, E.Total_Wins, E.Total_SO, F.Total_Awards_Player, G.Total_Awards_Manager, H.inducted , H.not_inducted, H.Hall_Of_Fame
 FROM A LEFT JOIN B ON A.playerID = B.playerID
-LEFT JOIN C ON A.playerID = C.playerID
-LEFT JOIN D ON C.playerID = D.playerID
-LEFT JOIN E ON D.playerID = E.playerID
-LEFT JOIN F ON E.playerID = F.playerID
-LEFT JOIN G ON F.playerID = G.playerID
-LEFT JOIN H ON G.playerID = H.playerID
+LEFT JOIN C ON A.playerID = C.playerID 
+LEFT JOIN D ON A.playerID = D.playerID 
+LEFT JOIN E ON A.playerID = E.playerID 
+LEFT JOIN F ON A.playerID = F.playerID 
+LEFT JOIN G ON A.playerID = G.playerID 
+LEFT JOIN H ON A.playerID = H.playerID 
+-- WHERE A.playerID in ('abadfe01', 'adamsba01', 'allendi01', 'altroni01', 'aaronha01', 'applilu01')
 GO
 
 SELECT playerID, FullName, Total_Teams, Batting_Total_Years, Total_Salary, Average_Salary, Total_401k, Last_Year_College, 
-Last_Year_Batting, Batting_Average, Total_HR, Total_Wins, Total_SO, Total_Awards_Player, Total_Awards_Manager, Hall_Of_Fame_Inducted_Years, Nominated_Year
-FROM tt347_Player_History
+Last_Year_Batting, Batting_Average, Total_HR, Total_Wins, Total_SO, Total_Awards_Player, Total_Awards_Manager, Hall_Of_Fame_Inducted_Years, Nominated_Years, Hall_Of_Fame
+FROM tt347_Player_History 
 GO
 
 SELECT t.playerID, AVG(t.Batting_Total_Years) AS AvgYrsPlayed, FORMAT(t.Average_Salary, 'C') AS AvgSalary, CONVERT(decimal(5,4), t.Batting_Average) AS Batting_Average
