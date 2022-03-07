@@ -38,6 +38,7 @@ AND ba.AB > 0
 GROUP BY ba.teamID, ba.playerID, dbo.FullName(ba.playerID), Team_BA_rank, BA_rank
 HAVING SUM(ba.H) > 150
 order by Team_BA_rank, BA_rank;
+GO
 
 -- dense_rank() over (partition by b.teamID order by (sum(b.h*1.0)/sum(b.ab)) desc) as [Team Batting rank],
 -- dense_rank() over (partition by b.playerID order by (sum(b.h*1.0)/sum(b.ab)) desc) as [All Batting rank]
