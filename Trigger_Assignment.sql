@@ -125,8 +125,8 @@ BEGIN
             SELECT s.playerID
                 , AVG(s.salary) AS Average_Salary
             FROM Salaries s
-                , inserted i
-            WHERE s.playerID = i.playerID
+                , deleted d
+            WHERE s.playerID = d.playerID
             GROUP BY s.playerID
             ) Sal
         WHERE People.playerID = Sal.playerID
@@ -134,20 +134,30 @@ BEGIN
 END
 GO
 
--- Trigger test for INSERT
-SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID = 'doejane01';
-INSERT INTO Salaries VALUES ('1992', 'NYA', 'AL', 'doejane01', '3250000.00', '', '');
---INSERT INTO People VALUES ()
+-- Setting up data in People to test trigger
+INSERT INTO People VALUES ('doejane01',1865,9,14,'USA','NY','Piermont',1937,5,18,'USA','NY','New York','Doc','Leitner','George Aloysius',185,71,'R','R',1887-08-10,1887-09-17,'leitd102','leitndo01', null, null, null, null, null)
+ 
+DELETE FROM Salaries WHERE playerID='doejane01'
+update people
+set tt347_Total_Salary = 0
+update people
+set tt347_Average_Salary = 0
 SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID = 'doejane01';
 
+-- Trigger test for INSERT
+SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID = 'doejane01';
+INSERT INTO Salaries VALUES ('1992', 'NYA', 'AL', 'doejane01', 3250000.00, null, null);
+INSERT INTO Salaries VALUES ('1993', 'NYA', 'AL', 'doejane01', 4250000.00, null, null);
+SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID = 'doejane01';
+ 
 -- Trigger test for UPDATE
 SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID='doejane01';
 SELECT * FROM Salaries WHERE playerID='doejane01';
-UPDATE Salaries SET salary='403250.00' WHERE playerID='doejane01';
+UPDATE Salaries SET salary=403250.00 WHERE playerID='doejane01' and yearid = 1992;
 SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID='doejane01';
-
+ 
 -- trigger test for DELETE
 SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID='doejane01';
 SELECT * FROM Salaries WHERE playerID='doejane01';
-DELETE FROM Salaries WHERE playerID='doejane01';
+DELETE FROM Salaries WHERE playerID='doejane01' and yearid = 1992;
 SELECT p.playerID, p.tt347_Total_Salary, p.tt347_Average_Salary FROM People p WHERE p.playerID='doejane01';
