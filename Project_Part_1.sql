@@ -357,3 +357,23 @@ WHERE Temp_Cume_Dist >= 0.40 AND Temp_Cume_Dist <= 0.60
 -- temperature and the last temperature that fall within the 40% and 60% range for the 3 cities your 
 -- focusing on.
 
+WITH Distribution_List_40 AS
+(
+SELECT wv.City_Name, CAST(t.Average_Temp AS DECIMAL(10, 6)) AS [Average Temp],
+  CAST(CUME_DIST() OVER (ORDER BY t.Average_Temp DESC) AS DECIMAL(8, 6)) AS Temp_Cume_Dist
+  FROM Weather_View wv, Temperature t
+  WHERE wv.State_Code = t.State_Code
+  AND wv.Site_Number = t.Site_Num
+  AND wv.City_Name IN ('Springerville', 'Boron', 'Ludlow')
+  GROUP BY wv.City_Name, t.Average_Temp
+  )
+SELECT * FROM Distribution_List_40
+WHERE Temp_Cume_Dist >= 0.40 AND Temp_Cume_Dist <= 0.60
+
+SELECT wv.City_Name,
+PERCENTILE_DISC(0.4) WITHIN GROUP (ORDER BY t.Average_Temp DESC) OVER (PARTITION BY wv.City_Name) AS [40 Percentile Temp],
+PERCENTILE_DISC(0.6) WITHIN GROUP (ORDER BY t.Average_Temp DESC) OVER (PARTITION BY wv.City_Name) AS [60 Percentile Temp]
+FROM Weather_View wv, Temperature t
+WHERE wv.State_Code = t.State_Code
+AND wv.City_Name IN ('Springerville', 'Boron', 'Ludlow')
+
