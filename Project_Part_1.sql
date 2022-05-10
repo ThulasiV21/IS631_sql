@@ -294,24 +294,24 @@ GO
 
 -- Question 9: You’ve decided that the results in #8 provided too much information and you only want to 3 cities with 
 -- the highest temperatures and group the results by state rank then city rank.
-SELECT A.State_Rank, A.State_Name, B.City_Rank, B.City_Name, B.Average_Temperature
+SELECT B.State_Rank, B.State_Name, C.City_Rank, C.City_Name, C.Average_Temperature
 FROM
 (SELECT avg(t.Average_Temp) as temp, A.State_Name,
     RANK() OVER (ORDER BY avg(t.Average_Temp) DESC) AS State_Rank FROM Temperature t,
     (SELECT DISTINCT state_name, State_Code FROM Weather_View) A
     WHERE t.State_Code=A.State_Code
-    GROUP BY A.State_Name) A,
+    GROUP BY A.State_Name) B,
 (
-SELECT aqs.State_Name, aqs.City_Name, CAST(AVG(t.Average_Temp) AS DECIMAL(10, 6)) AS Average_Temperature,
-DENSE_RANK() OVER (PARTITION BY aqs.State_Name ORDER BY avg(t.Average_Temp) DESC) AS City_Rank FROM Temperature t, AQS_Sites aqs
-WHERE t.State_Code = aqs.State_Code
-AND t.Site_Num = aqs.Site_Number
-GROUP BY aqs.City_Name, aqs.State_Name
-) B
-WHERE A.State_Name = B.State_Name
-AND A.State_Rank <= 15
-AND B.City_Rank <= 3
-ORDER BY A.State_Rank, B.City_Rank 
+SELECT wv.State_Name, wv.City_Name, CAST(AVG(t.Average_Temp) AS DECIMAL(10, 6)) AS Average_Temperature,
+DENSE_RANK() OVER (PARTITION BY wv.State_Name ORDER BY avg(t.Average_Temp) DESC) AS City_Rank FROM Temperature t, Weather_View wv
+WHERE t.State_Code = wv.State_Code
+AND t.Site_Num = wv.Site_Number
+GROUP BY wv.City_Name, wv.State_Name
+) C
+WHERE B.State_Name = C.State_Name
+AND B.State_Rank <= 15
+AND C.City_Rank <= 3
+ORDER BY B.State_Rank, C.City_Rank 
 GO
 
 -- Question 10: You decide you like the average temperature to be in the 80's. Pick 3 cities that meets this condition 
@@ -371,9 +371,17 @@ SELECT * FROM Distribution_List_40
 WHERE Temp_Cume_Dist >= 0.40 AND Temp_Cume_Dist <= 0.60
 
 SELECT wv.City_Name,
-PERCENTILE_DISC(0.4) WITHIN GROUP (ORDER BY t.Average_Temp DESC) OVER (PARTITION BY wv.City_Name) AS [40 Percentile Temp],
-PERCENTILE_DISC(0.6) WITHIN GROUP (ORDER BY t.Average_Temp DESC) OVER (PARTITION BY wv.City_Name) AS [60 Percentile Temp]
+PERCENTILE_DISC(0.4) WITHIN GROUP (ORDER BY t.Average_Temp) OVER (PARTITION BY wv.City_Name) AS [40 Percentile Temp],
+PERCENTILE_DISC(0.6) WITHIN GROUP (ORDER BY t.Average_Temp) OVER (PARTITION BY wv.City_Name) AS [60 Percentile Temp]
 FROM Weather_View wv, Temperature t
 WHERE wv.State_Code = t.State_Code
-AND wv.City_Name IN ('Springerville', 'Boron', 'Ludlow')
+-- AND wv.Site_Number = t.Site_Num
+-- AND wv.City_Name IN ('Springerville', 'Boron', 'Ludlow')
+
+SELECT DISTINCT wv.City_Name, PERCENTILE_DISC(0.4) WITHIN GROUP (ORDER BY t.AVERAGE_TEMP) OVER (PARTITION BY wv.CITY_NAME) AS '40 PERCENTILE TEMP', 
+PERCENTILE_DISC(0.6) WITHIN GROUP (ORDER BY t.AVERAGE_TEMP) OVER (PARTITION BY wv.CITY_NAME) AS '60 PERCENTILE TEMP'
+FROM Temperature t, Weather_View wv
+WHERE wv.State_Code = t.State_Code
+-- AND wv.City_Name IN ('Springerville Park', 'Boron', 'Ludlow')
+ORDER BY City_Name
 
